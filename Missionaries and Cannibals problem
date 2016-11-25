@@ -1,0 +1,274 @@
+#include <QCoreApplication>
+
+#define TAMANHO 1000
+
+struct lado{
+    int m;
+    int c;
+    bool barco;
+    };
+
+struct estado{
+    lado esquerdo;
+    lado direito;
+    //estado *pai;
+    int indice_pai;
+    int profundidade;
+    };
+
+estado vetor[TAMANHO];
+int posicao_vazia = 0;
+int indice_atual = 0;
+
+estado initarvore(){
+    lado esq;
+    esq.m = 3;
+    esq.c = 3;
+    esq.barco = true;
+    lado dir;
+    dir.m = 0;
+    dir.c = 0;
+    dir.barco = false;
+    estado inicial;
+    inicial.direito = dir;
+    inicial.esquerdo = esq;
+    inicial.profundidade = 1;
+return inicial;
+}
+
+
+estado transferirC (estado novo){
+    if(novo.esquerdo.barco==true){
+        novo.esquerdo.c--;
+        novo.direito.c++;
+        novo.direito.barco=true;
+        novo.esquerdo.barco=false;
+    }   else{
+        novo.direito.c--;
+        novo.esquerdo.c++;
+        novo.direito.barco=false;
+        novo.esquerdo.barco=true;
+        }
+    return novo;
+}
+estado transferirM (estado novo){
+    if(novo.esquerdo.barco==true){
+        novo.esquerdo.m--;
+        novo.direito.m++;
+        novo.direito.barco=true;
+        novo.esquerdo.barco=false;
+    }   else{
+        novo.direito.m--;
+        novo.esquerdo.m++;
+        novo.direito.barco=false;
+        novo.esquerdo.barco=true;
+    }
+    return novo;
+}
+estado transferirMM (estado novo){
+    if(novo.esquerdo.barco==true){
+        novo.esquerdo.m-=2;
+        novo.direito.m+=2;
+        novo.direito.barco=true;
+        novo.esquerdo.barco=false;
+    }   else{
+        novo.direito.m-=2;
+        novo.esquerdo.m+=2;
+        novo.direito.barco=false;
+        novo.esquerdo.barco=true;
+    }
+    return novo;
+}
+estado transferirCC(estado novo){
+    if(novo.esquerdo.barco==true){
+        novo.esquerdo.c-=2;
+        novo.direito.c+=2;
+        novo.direito.barco=true;
+        novo.esquerdo.barco=false;
+    }   else{
+        novo.direito.c-=2;
+        novo.esquerdo.c+=2;
+        novo.direito.barco=false;
+        novo.esquerdo.barco=true;
+        }
+    return novo;
+}
+estado transferirCM(estado novo){
+    if(novo.esquerdo.barco==true){
+        novo.esquerdo.m--;
+        novo.direito.m++;
+        novo.esquerdo.c--;
+        novo.direito.c++;
+        novo.direito.barco=true;
+        novo.esquerdo.barco=false;
+    }   else{
+        novo.direito.m--;
+        novo.esquerdo.m++;
+        novo.direito.c--;
+        novo.esquerdo.c++;
+        novo.direito.barco=false;
+        novo.esquerdo.barco=true;
+    }
+    return novo;
+}
+
+bool efinal(estado final){
+    if(final.esquerdo.m == 0 && final.esquerdo.c == 0 && final.esquerdo.barco==false){
+        if(final.direito.m == 3 && final.direito.c == 3 && final.direito.barco==true){
+            return true;
+        }
+    }
+      return false;
+}
+
+void printEstado(estado atual){
+    printf("\nlado dir C: %d", atual.direito.c);
+    printf("\nlado dir M: %d", atual.direito.m);
+    printf("\nlado esq C: %d", atual.esquerdo.c);
+    printf("\nlado esq M: %d", atual.esquerdo.m);
+    printf("\n-----------------\n");
+}
+
+void printEstados(){
+    printf("\n\n-----Estados------------\n");
+    for(int i=0; i<posicao_vazia; i++){
+        printf("\neu: %d \npai: %d", i, vetor[i].indice_pai);
+        printEstado(vetor[i]);
+    }
+}
+
+bool ehLadoIgual(lado atual, lado comparacao){
+    if(atual.c==comparacao.c && atual.m==comparacao.m && atual.barco==comparacao.barco)
+        return true;
+    return false;
+}
+
+bool saoEstadosIguais(estado atual, estado comparacao){
+    if(ehLadoIgual(atual.direito, comparacao.direito) && ehLadoIgual(atual.esquerdo, comparacao.esquerdo))
+        return true;
+    return false;
+}
+
+bool verificaSeEstadoRepetido(estado atual){
+    for(int i=0; i<posicao_vazia; i++){
+        if(saoEstadosIguais(atual, vetor[i])){
+            return true;
+        }
+    }
+    return false;
+}
+
+bool validar(estado atual){ //olhar com priscilla
+    if((atual.esquerdo.m >= atual.esquerdo.c || atual.esquerdo.m==0) && (atual.direito.m >= atual.direito.c || atual.direito.m == 0)){
+        if((atual.esquerdo.m<=3 && atual.esquerdo.m>=0) && (atual.esquerdo.c<=3 && atual.esquerdo.c>=0)){
+            if((atual.direito.m<=3 && atual.direito.m>=0) && (atual.direito.c<=3 && atual.direito.c>=0))
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool gerarFilhos(estado atual, int pai){
+    estado auxiliar;
+    //como transferir todos recursivamente??
+
+    auxiliar = transferirC(atual);
+    if(validar(auxiliar) == true && efinal(auxiliar) == false && !verificaSeEstadoRepetido(auxiliar)){
+        auxiliar.indice_pai = pai;
+        vetor[posicao_vazia] = auxiliar;
+        posicao_vazia++;
+    }
+    if(efinal(auxiliar) && validar(auxiliar)){
+        auxiliar.indice_pai = pai;
+        vetor[posicao_vazia] = auxiliar;
+        posicao_vazia++;
+        return true;
+    }
+
+    auxiliar = transferirM(atual);
+    if(validar(auxiliar) == true && efinal(auxiliar) == false && !verificaSeEstadoRepetido(auxiliar)){
+        //adicionar o estado auxiliar no array
+        auxiliar.indice_pai = pai;
+        vetor[posicao_vazia] = auxiliar;
+        posicao_vazia++;
+    }
+    if(efinal(auxiliar) && validar(auxiliar)){
+        auxiliar.indice_pai = pai;
+        vetor[posicao_vazia] = auxiliar;
+        posicao_vazia++;
+        return true;
+    }
+
+    auxiliar = transferirMM(atual);
+    if(validar(auxiliar) == true && efinal(auxiliar) == false && !verificaSeEstadoRepetido(auxiliar)){
+        //adicionar o estado auxiliar no array
+        auxiliar.indice_pai = pai;
+        vetor[posicao_vazia] = auxiliar;
+        posicao_vazia++;
+    }
+    if(efinal(auxiliar) && validar(auxiliar)){
+        auxiliar.indice_pai = pai;
+        vetor[posicao_vazia] = auxiliar;
+        posicao_vazia++;
+        return true;
+    }
+
+    auxiliar = transferirCC(atual);
+    if(validar(auxiliar) == true && efinal(auxiliar) == false && !verificaSeEstadoRepetido(auxiliar)){
+        //adicionar o estado auxiliar no array
+        auxiliar.indice_pai = pai;
+        vetor[posicao_vazia] = auxiliar;
+        posicao_vazia++;
+    }
+    if(efinal(auxiliar) && validar(auxiliar)){
+        auxiliar.indice_pai = pai;
+        vetor[posicao_vazia] = auxiliar;
+        posicao_vazia++;
+        return true;
+    }
+
+    auxiliar = transferirCM(atual);
+    if(validar(auxiliar) == true && efinal(auxiliar) == false && !verificaSeEstadoRepetido(auxiliar)){
+        //adicionar o estado auxiliar no array
+        auxiliar.indice_pai = pai;
+        vetor[posicao_vazia] = auxiliar;
+        posicao_vazia++;
+    }
+    if(efinal(auxiliar) && validar(auxiliar)){
+        auxiliar.indice_pai = pai;
+        vetor[posicao_vazia] = auxiliar;
+        posicao_vazia++;
+        return true;
+    }
+
+    auxiliar.profundidade = atual.profundidade++;
+    return false;
+}
+//Função utilizada para checar se o resultado do programa estava correto. Foi retirada do código.
+/*void printSolucao(){
+    int indice = posicao_vazia--;
+    while(indice!=0){
+        printEstado(vetor[indice]);
+        indice = vetor[indice].indice_pai;
+    }
+    printEstado(vetor[0]);
+}*/
+
+int main() {
+   estado root = initarvore();
+   vetor[posicao_vazia]=root;
+   posicao_vazia++;
+   gerarFilhos(root, 0);
+   int i = 1;
+   do {
+        if(gerarFilhos(vetor[i], i)==false){
+            ++i;
+        } else {
+            i=posicao_vazia;
+        }
+   }while(i!=posicao_vazia);
+
+   printEstados();
+   return 0;
+}
